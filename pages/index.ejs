@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+    <title>ToDo List</title>
+    <script>
+        window.onload = function() {
+            var tbody = document.getElementsByTagName('tbody')[0];
+
+            tbody.addEventListener('click', function(e) {
+                const target = e.target;
+
+                if (target.hasAttribute('id')) {
+                    if (target.classList.contains('edit')) {
+                        // Redirect to edit page
+                        location.href = 'http://localhost:8080/edit/' + target.id;
+                    } else if (target.classList.contains('delete')) {
+                        // Send delete request
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('DELETE', 'edit/' + target.id, true);
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                // Redirect to home page after deletion
+                                location.href = 'http://localhost:8080';
+                                console.log('Item deleted');
+                            } else {
+                                console.error('Error deleting item');
+                            }
+                        };
+                        xhr.send();
+                    }
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h1 class="panel-title">ToDo List</h1>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%- data %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <%- buttons ? 
+                '<a href="/" class="btn btn-lg btn-info">Done!</a>' : 
+                '<a href="add" class="btn btn-lg btn-info">Add item!</a>' +
+                '<a href="edit" class="btn btn-lg btn-info">Edit items!</a>' %>
+        </div>
+    </div>
+</body>
+</html>
