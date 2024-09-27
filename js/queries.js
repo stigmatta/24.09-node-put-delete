@@ -2,21 +2,26 @@
 const connection = require('./config');
 
 module.exports = {
-    getAllItems: async function (req, res) {
+    login: async (req, res) => {
         try {
-            const pool = await connection; // Get the connection from the pool
-            const result = await pool.request().query("SELECT * FROM items");
-            
-            let tableRows = '';
+            const { login, password } = req.body;
+            const pool = await connection;
+            const request = pool.request();
+    
+            let adminExists = await request
+                .input('login', mssql.VarChar, login)
+                .input('password', mssql.VarChar, password)
+                .query('SELECT COUNT(*) AS count FROM login WHERE login = @login AND password = @password');
+    
+            if (adminExists.recordset[0].count > 0) {
 
-            result.recordset.forEach(row => {
-                if (req.url === '/') {
-                    tableRows += `<tr>
-                        <td>${row.name}</td>
-                        <td>${row.description}</td>
-                        <td>${row.completed ? 'yes' : 'no'}</td>
-                    </tr>`;
-                } else {
+                res.cookie('adminLogin', login, { maxAge: 900000, httpOnly: true });
+                
+                let tableRows = '';
+
+                const result = await request.query("SELECT * FROM items");
+
+                result.recordset.forEach(row => {
                     tableRows += `<tr>
                         <td>
                             <span class="glyphicon glyphicon-pencil edit" style="cursor: pointer" id="${row.id}">&nbsp;</span>
@@ -26,15 +31,19 @@ module.exports = {
                         <td>${row.description}</td>
                         <td>${row.completed ? 'yes' : 'no'}</td>
                     </tr>`;
-                }
-            });
-
-            res.render('index', { data: tableRows, buttons: req.url !== '/' });
+                });
+    
+                res.render('index', { data: tableRows, buttons: req.url !== '/' });
+            } else {
+                res.status(401).send('Invalid login or password');
+            }
+    
         } catch (err) {
-            console.error('Error fetching items:', err);
-            res.status(500).send('Internal Server Error');
+            console.log(err);
+            res.status(500).send('Error during admin login');
         }
     },
+    
 
     insertItem: async function (data, req, res) {
         const inserts = {

@@ -1,42 +1,46 @@
-﻿var express  = require('express'); 
-var app = express();
+﻿const express = require('express'); 
+const mssql = require('mssql');
+const path = require('path');
+const bodyParser = require('body-parser'); 
+const cookieParser = require('cookie-parser'); 
 
-var path = require('path');
-var bodyParser = require('body-parser'); 
 
-var port = 8080; 
+const app = express();
+const port = 8080; 
 
-var displayHandler = require('./js/displayhandler'); 
-var insertHandler = require('./js/inserthandler'); 
-var editHandler = require('./js/edithandler'); 
+const displayHandler = require('./js/displayhandler'); 
+const insertHandler = require('./js/inserthandler'); 
+const editHandler = require('./js/edithandler'); 
+const queries = require('./js/queries');
 
-app.set('views', __dirname + '/pages'); 
+app.set('views', path.join(__dirname, 'pages')); 
 app.set('view engine', 'ejs');
 
 app.use(express.static(path.join(__dirname, 'pages')));
 
-var jsonParser = bodyParser.json();
-var textParser = bodyParser.text(); 
+app.use(bodyParser.urlencoded({ extended: true })); 
+app.use(bodyParser.json());
+app.use(bodyParser.text()); 
 
-app.use(jsonParser); 
-app.use(textParser); 
+app.get('/', async (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'pages', 'authorization.html'));
+    } catch (err) {
+        console.log(err);
+        res.status(500).send('Error loading page');
+    }
+});
 
-app.get('/', displayHandler.displayItems);
+app.post('/admin', queries.login);
 
 app.get('/add', insertHandler.loadAddPage); 
 app.post('/add/newItem', insertHandler.addRow); 
 
 app.get('/edit', displayHandler.displayItems); 
-
 app.get('/edit/:id', editHandler.loadEditPage);
-
 app.put('/edit/:id', editHandler.changeItem);
-
 app.delete('/edit/:id', editHandler.removeItem); 
 
-
-app.listen(port, function() { 
-
-	console.log('app listening on port ' + port); 
-
+app.listen(port, () => { 
+    console.log('App listening on port ' + port); 
 });  

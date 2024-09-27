@@ -17,7 +17,6 @@ const config = {
     }
 };
 
-// Create a connection pool
 const poolPromise = new mssql.ConnectionPool(config)
     .connect()
     .then(pool => {
